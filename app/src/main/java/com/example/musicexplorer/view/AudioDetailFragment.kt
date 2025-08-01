@@ -13,6 +13,7 @@ import com.bumptech.glide.request.RequestOptions
 import com.example.musicexplorer.R
 import com.example.musicexplorer.data.AudioFile
 import com.example.musicexplorer.databinding.AudioDetailFragmentBinding
+import com.example.musicexplorer.utils.FileUtils
 
 class AudioDetailFragment : Fragment() {
 
@@ -28,18 +29,15 @@ class AudioDetailFragment : Fragment() {
         _binding = AudioDetailFragmentBinding.inflate(inflater, container, false)
         return binding.root
     }
-
-    @SuppressLint("SetTextI18n")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         audioFile = arguments?.getParcelable("audioFile")
-
         audioFile?.let { audio ->
             binding.albumTitle.text = audio.title
             binding.albumArtist.text = audio.artist
-            binding.albumDuration.text = formatDuration(audio.duration)
-            binding.albumSize.text = "${audio.size / (1024 * 1024)} MB"
+            binding.albumDuration.text = FileUtils.formatDuration(audio.duration)
+            binding.albumSize.text = FileUtils.formatFileSize(audio.size)
             binding.albumPath.text=audio.path
             loadAlbumArt(binding.albumArtImage, audio.albumArt)
         }
@@ -63,12 +61,6 @@ class AudioDetailFragment : Fragment() {
                 .load(R.drawable.cover)
                 .into(imageView)
         }
-    }
-
-    private fun formatDuration(duration: Long): String {
-        val minutes = duration / 1000 / 60
-        val seconds = (duration / 1000) % 60
-        return String.format("%02d:%02d", minutes, seconds)
     }
 
     override fun onDestroyView() {

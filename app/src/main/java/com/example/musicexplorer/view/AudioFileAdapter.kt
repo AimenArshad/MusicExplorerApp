@@ -7,6 +7,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.musicexplorer.data.AudioFile
 import com.example.musicexplorer.databinding.AudioItemBinding
+import com.example.musicexplorer.utils.FileUtils
 
 
 class AudioFileAdapter(
@@ -29,7 +30,7 @@ class AudioFileAdapter(
         fun bind(audio: AudioFile) = with(binding) {
             fileName.text = audio.title
             artistName.text = audio.artist
-            duration.text = formatDuration(audio.duration)
+            duration.text = FileUtils.formatDuration(audio.duration)
             root.setOnClickListener { onItemClick(audio) }
         }
     }
