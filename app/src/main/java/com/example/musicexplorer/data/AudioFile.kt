@@ -14,6 +14,6 @@ data class AudioFile(
     val duration: Long,
     val size: Long,
     val path: String,
-    val albumArt: ByteArray?
+    val albumArt: ByteArray?       //binary data for image file
 ) : Parcelable
 

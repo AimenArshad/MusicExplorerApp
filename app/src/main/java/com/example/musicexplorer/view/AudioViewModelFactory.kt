@@ -6,10 +6,12 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.musicexplorer.data.AudioFileDatabase
 import com.example.musicexplorer.data.AudioFileRepository
 
-class AudioViewModelFactory(private val context: Context) : ViewModelProvider.Factory {
+class AudioViewModelFactory(private val audioFileRepository: AudioFileRepository) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        val dao = AudioFileDatabase.getDatabase(context).audioFileDao()
-        val repository = AudioFileRepository(dao)
-        return AudioFileViewModel(repository) as T
+        if (modelClass.isAssignableFrom(AudioFileViewModel::class.java)) {
+            return AudioFileViewModel(audioFileRepository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

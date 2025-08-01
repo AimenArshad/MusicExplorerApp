@@ -23,11 +23,13 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.musicexplorer.R
 import com.example.musicexplorer.data.AudioFile
+import com.example.musicexplorer.data.AudioFileDatabase
+import com.example.musicexplorer.data.AudioFileRepository
 import com.example.musicexplorer.databinding.ActivityMainBinding
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var binding: ActivityMainBinding
+    private lateinit var binding: ActivityMainBinding        //deferred initializations
     private lateinit var audioAdapter: AudioFileAdapter
     private lateinit var viewModel: AudioFileViewModel
 
@@ -38,8 +40,10 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        val Dao = AudioFileDatabase.getDatabase(applicationContext).audioFileDao()
+        val Repository = AudioFileRepository(Dao)
         viewModel =
-            ViewModelProvider(this, AudioViewModelFactory(this))[AudioFileViewModel::class.java]
+            ViewModelProvider(this, AudioViewModelFactory(Repository))[AudioFileViewModel::class.java]
 
         setupRecyclerView()
         checkPermissionStatus()
@@ -111,7 +115,6 @@ class MainActivity : AppCompatActivity() {
             override fun afterTextChanged(s: Editable?) {
                 viewModel.updateSearchQuery(s.toString())
             }
-
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
         })
