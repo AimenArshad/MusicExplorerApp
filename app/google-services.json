@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "35614828119",
+    "project_id": "music-explorer-7afd5",
+    "storage_bucket": "music-explorer-7afd5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:35614828119:android:c26af977aca65098432512",
+        "android_client_info": {
+          "package_name": "com.example.musicexplorer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBdKS1jXldUcMK46SM6eHtOyaoWRsjr6mg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

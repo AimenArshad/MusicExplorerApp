@@ -5,6 +5,7 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
 
     <application
+        android:name=".App"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -14,6 +15,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MusicExplorer"
         tools:targetApi="31">
+        <meta-data
+            android:name="firebase_inapp_messaging_auto_display_enabled"
+            android:value="false" />
         <activity
             android:name=".view.SplashScreen"
             android:exported="true">
@@ -25,6 +29,9 @@
         </activity>
         <activity android:name=".view.EmptyStateActivity" />
         <activity android:name=".view.MainActivity"/>
+
     </application>
+
+
 
 </manifest>
