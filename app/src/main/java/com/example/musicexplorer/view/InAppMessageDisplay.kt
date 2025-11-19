@@ -1,7 +1,5 @@
 import android.app.Activity
 import android.app.Dialog
-import android.content.Intent
-import android.net.Uri
 import android.util.Log
 import android.view.LayoutInflater
 import com.example.musicexplorer.databinding.InAppMessageCardBinding

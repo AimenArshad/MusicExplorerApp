@@ -1,6 +1,5 @@
 package com.example.musicexplorer.view
 
-import InAppMessageDisplay
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -21,10 +20,19 @@ import com.example.musicexplorer.data.AudioFile
 import com.example.musicexplorer.data.AudioFileDatabase
 import com.example.musicexplorer.data.AudioFileRepository
 import com.example.musicexplorer.databinding.ActivityMainBinding
+import com.example.musicexplorer.utils.Prefs
+import com.example.musicexplorer.view.BlackFridayBottomSheet
 import com.google.firebase.BuildConfig
+import com.google.firebase.Firebase
 import com.google.firebase.FirebaseApp
+import com.google.firebase.analytics.analytics
 import com.google.firebase.inappmessaging.FirebaseInAppMessaging
 import com.google.firebase.installations.FirebaseInstallations
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable.cancel
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -33,19 +41,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var audioAdapter: AudioFileAdapter
     private lateinit var viewModel: AudioFileViewModel
     private lateinit var firebaseInAppMessaging: FirebaseInAppMessaging
+    private lateinit var blackFridayDisplay: BlackFridayBottomSheet
+    private var fileOpenTimerJob: Job? = null
+    private val timerThresholdMinutes = 1L
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setupFirebase()
-
-        val forceRefresh = true
-        FirebaseInstallations.getInstance().getToken(forceRefresh)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    Log.d("Installations", "Installation auth token: " + task.result?.token)
-                } else {
-                    Log.e("Installations", "Unable to get Installation auth token")
-                }
-            }
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -55,21 +57,13 @@ class MainActivity : AppCompatActivity() {
         setupRecyclerView()
         checkPermissionStatus()
         setupSearchListener()
-        firebaseInAppMessaging.triggerEvent("app_opened")
-
     }
 
     private fun setupFirebase() {
         firebaseInAppMessaging = FirebaseInAppMessaging.getInstance()
-        firebaseInAppMessaging.setMessageDisplayComponent (InAppMessageDisplay(this))
+        blackFridayDisplay = BlackFridayBottomSheet(this)
+        firebaseInAppMessaging.setMessageDisplayComponent(blackFridayDisplay)
         Log.d("FIAM", "Custom InAppMessageDisplay registered.")
-        val cacheFile = File(filesDir, "fiam_eligible_campaigns_cache_file")
-        if (cacheFile.exists()) {
-            cacheFile.delete()
-            Log.d("FIAM", "Cleared FIAM cache for fresh fetch")
-        }
-
-
     }
     private fun checkPermissionStatus() {
         val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -105,13 +99,39 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun startFileOpenTimer() {
+        fileOpenTimerJob?.cancel()
+
+        fileOpenTimerJob = lifecycleScope.launch {
+            var elapsedMinutes = 0L
+            while (isActive) {
+                delay(60_000)
+                elapsedMinutes++
+                Log.d("FIAM", "File open timer: $elapsedMinutes minutes")
+                if (elapsedMinutes >= timerThresholdMinutes) {
+                    Log.d("FIAM", "Triggering FIAM event")
+                    firebaseInAppMessaging.triggerEvent("new_event")
+                    cancel()
+                }
+            }
+        }
+    }
+    private fun stopFileOpenTimer() {
+        fileOpenTimerJob?.cancel()
+        fileOpenTimerJob = null
+    }
     private fun openDetailFragment(audio: AudioFile) {
         binding.fragmentView.visibility = android.view.View.VISIBLE
         binding.recyclerView.visibility = android.view.View.GONE
-       // firebaseInAppMessaging.triggerEvent("details_opened")
-        firebaseInAppMessaging.triggerEvent("opened_trigger")
+        val count = Prefs.incrementFileOpenCount(this)
+        startFileOpenTimer()
+        Log.d("fiam", "File opened count: $count")
+        if (Prefs.getCount(this)==3) {
+            Log.d("fiam", "Triggered FIAM event: file_open_bonus")
+            Prefs.resetFileOpenCount(this)
+            firebaseInAppMessaging.triggerEvent("new_event")
 
-
+        }
         val bundle = Bundle().apply { putParcelable("audioFile", audio) }
         val fragment = AudioDetailFragment().apply { arguments = bundle }
 
@@ -150,13 +170,21 @@ class MainActivity : AppCompatActivity() {
         finish()
     }
 
+//    override fun onResume() {
+//        super.onResume()
+//        blackFridayDisplay.showLastMessageIfAny()
+//    }
+
     override fun onBackPressed() {
         if (supportFragmentManager.backStackEntryCount > 0) {
             supportFragmentManager.popBackStack()
             binding.fragmentView.visibility = android.view.View.GONE
             binding.recyclerView.visibility = android.view.View.VISIBLE
+            stopFileOpenTimer()
+            blackFridayDisplay.showLastMessageIfAny()
 
-            firebaseInAppMessaging.triggerEvent("test_exp")
+
+
         } else {
             super.onBackPressed()
         }
